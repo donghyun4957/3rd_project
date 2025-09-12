@@ -192,17 +192,5 @@ def get_content(component):
         return get_mobile_naver_content(blog_url)
     elif "tistory.com" in blog_kind:
         return get_tistory_content(blog_url)
-    # elif "brunch.co.kr" in blog_kind:
-    #     return get_brunch_content(blog_url)
-    # elif "velog.io" in blog_kind:
-    #     return get_velog_content(blog_url)
-    # elif "egloos.com" in blog_kind:
-    #     return get_egloos_content(blog_url)
-    # elif "bobaedream.co.kr" in blog_kind:
-    #     return get_bobaedream_content(blog_url)
-    # elif "encar.com" in blog_kind:
-    #     return get_encar_content(blog_url)
-    # elif "autospy.net" in blog_kind:
-    #     return get_autospy_content(blog_url)
     else:
         return "unknown"
