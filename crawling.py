@@ -29,7 +29,7 @@ def get_kin_content(url):
     return qna_title_text, qna_question_text, answer_texts
 
 def get_naver_content(url):
-    
+
     base_url = "https://blog.naver.com"
     bs = get_parser(url)
 
@@ -45,6 +45,37 @@ def get_naver_content(url):
         return clean_text
     else: 
         return "내용 없음"
+
+def get_mobile_naver_content(url):
+
+    url = url.replace("blog.naver.com", "m.blog.naver.com")
+    bs = get_parser(url)
+
+    texts = None
+
+    content = bs.find("div", class_="se-main-container")
+    if content:
+        texts = content.get_text(" ", strip=True)
+
+    if not texts:
+        wraps = bs.find_all("div", class_="se_component_wrap")
+        if wraps:
+            texts = " ".join([w.get_text(" ", strip=True) for w in wraps])
+
+    if not texts:
+        legacy = (
+            bs.find("div", id="postViewArea") or
+            bs.find("div", class_="post-view") or
+            bs.find("div", id="viewTypeSelector")
+        )
+        if legacy:
+            texts = legacy.get_text(" ", strip=True)
+
+    if not texts:
+        return "내용 없음"
+
+    clean_text = re.sub(r'\s+', ' ', texts)
+    return clean_text
 
 def get_tistory_content(url):
     bs = get_parser(url)
@@ -139,7 +170,7 @@ def get_content(component):
     blog_kind = component['displayLink'].lower()
 
     if "blog.naver.com" in blog_kind:
-        return get_naver_content(blog_url)
+        return get_mobile_naver_content(blog_url)
     elif "tistory.com" in blog_kind:
         return get_tistory_content(blog_url)
     elif "brunch.co.kr" in blog_kind:
