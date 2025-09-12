@@ -51,6 +51,15 @@ def get_mobile_naver_content(url):
     url = url.replace("blog.naver.com", "m.blog.naver.com")
     bs = get_parser(url)
 
+    title_tag = (
+        bs.find("h3", class_="se_textarea") or
+        bs.find("div", class_="se-title-text") or
+        bs.find("div", id="title") or
+        bs.find("strong") or
+        bs.find("title")  # 최후 fallback: HTML <title> 태그
+    )
+    title = title_tag.get_text(strip=True) if title_tag else "제목 없음"
+
     texts = None
 
     content = bs.find("div", class_="se-main-container")
@@ -72,20 +81,30 @@ def get_mobile_naver_content(url):
             texts = legacy.get_text(" ", strip=True)
 
     if not texts:
-        return "내용 없음"
+        return title, "내용 없음"
 
     clean_text = re.sub(r'\s+', ' ', texts)
-    return clean_text
+    return title, clean_text
 
 def get_tistory_content(url):
     bs = get_parser(url)
+
+    title_tag = (
+        bs.find("h1", class_="tit_blog") or
+        bs.find("h2", class_="tit_blog") or
+        bs.find("h1", class_="entry-title") or
+        bs.find("h2", class_="entry-title") or
+        bs.find("title")
+    )
+    title = title_tag.get_text(strip=True) if title_tag else "제목 없음"
+
     content = bs.find("div", class_="article") or bs.find("div", class_="tt_article_useless_p_margin")
     if content:
         result = content.get_text(" ", strip=True)
         clean_text = re.sub(r'\s+', ' ', result)
-        return clean_text
+        return title, clean_text
     else: 
-        return "내용 없음" 
+        return title, "내용 없음" 
 
 def get_brunch_content(url):
     bs = get_parser(url)
@@ -173,17 +192,17 @@ def get_content(component):
         return get_mobile_naver_content(blog_url)
     elif "tistory.com" in blog_kind:
         return get_tistory_content(blog_url)
-    elif "brunch.co.kr" in blog_kind:
-        return get_brunch_content(blog_url)
-    elif "velog.io" in blog_kind:
-        return get_velog_content(blog_url)
-    elif "egloos.com" in blog_kind:
-        return get_egloos_content(blog_url)
-    elif "bobaedream.co.kr" in blog_kind:
-        return get_bobaedream_content(blog_url)
-    elif "encar.com" in blog_kind:
-        return get_encar_content(blog_url)
-    elif "autospy.net" in blog_kind:
-        return get_autospy_content(blog_url)
+    # elif "brunch.co.kr" in blog_kind:
+    #     return get_brunch_content(blog_url)
+    # elif "velog.io" in blog_kind:
+    #     return get_velog_content(blog_url)
+    # elif "egloos.com" in blog_kind:
+    #     return get_egloos_content(blog_url)
+    # elif "bobaedream.co.kr" in blog_kind:
+    #     return get_bobaedream_content(blog_url)
+    # elif "encar.com" in blog_kind:
+    #     return get_encar_content(blog_url)
+    # elif "autospy.net" in blog_kind:
+    #     return get_autospy_content(blog_url)
     else:
         return "unknown"
