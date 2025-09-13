@@ -189,8 +189,10 @@ def get_content(component):
     blog_kind = component['displayLink'].lower()
 
     if "blog.naver.com" in blog_kind:
-        return get_mobile_naver_content(blog_url)
+        title, content = get_mobile_naver_content(blog_url)
+        return title, content
     elif "tistory.com" in blog_kind:
-        return get_tistory_content(blog_url)
+        title, content = get_tistory_content(blog_url)
+        return title, content
     else:
         return "unknown"

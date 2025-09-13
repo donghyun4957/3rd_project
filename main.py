@@ -25,9 +25,9 @@ for keyword in keywords:
                 link = item.get('link')
                 if not link or link in seen_links:
                     continue
-                blog_content = get_content(item)
+                blog_title, blog_content = get_content(item)
                 if blog_content != "내용 없음":
-                    content = {'제목': item['title'], '내용': blog_content, '블로그': item['displayLink'], '링크': link}
+                    content = {'제목': blog_title, '내용': blog_content, '블로그': item['displayLink'], '링크': link}
                     contents.append(content)
                     seen_links.add(link)
         else:
