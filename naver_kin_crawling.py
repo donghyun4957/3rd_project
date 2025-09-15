@@ -57,7 +57,7 @@ for kw in common_keyword[:1]:
                         
                         content = {'질문': qna_question_text, '답변': answer_dict, '제목': qna_title_text, '링크': link}
 
-                        if qna_question_text == "질문 없음" or answer_dict == "답변 없음":
+                        if qna_question_text == "질문 없음" or answer_texts == ["답변 없음"]:
                             continue
                         
                         contents.append(content)

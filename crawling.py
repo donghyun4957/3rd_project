@@ -20,12 +20,17 @@ def get_kin_content(url):
     qna_question = bs.find("div", class_="questionDetail")
     qna_question_text = qna_question.get_text(" ", strip=True) if qna_question else "질문 없음"
 
-    qna_answers = bs.find_all("div", class_="se-main-container")
+    qna_answers = bs.find_all("div", class_="answerDetail _endContents _endContentsText")
     if qna_answers:
         answer_texts = [ans.get_text(" ", strip=True) for ans in qna_answers]
     else:
-        answer_texts = ["답변 없음"]
+        qna_answers = bs.find_all("div", class_="se-main-container")
 
+        if qna_answers:
+            answer_texts = [ans.get_text(" ", strip=True) for ans in qna_answers]
+        else:
+            answer_texts = ["답변 없음"]
+    
     return qna_title_text, qna_question_text, answer_texts
 
 def get_naver_content(url):
