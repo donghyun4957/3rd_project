@@ -1,6 +1,7 @@
 import os
 import re
 import time
+import json
 import requests
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
@@ -8,6 +9,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
+from custom_langchain import refine_text
 
 def clean_text(raw_text):
     """
@@ -22,7 +25,7 @@ def clean_text(raw_text):
     return paragraphs
 
 
-def traverse_folder(folder_id, current_path=None):
+def traverse_folder(folder_id, model, current_path=None):
     if current_path is None:
         current_path = []
 
@@ -44,7 +47,7 @@ def traverse_folder(folder_id, current_path=None):
             dt_spans = driver.find_elements(By.XPATH, f'//*[@id="{sub_container_id}"]/dt/span')
             for dt_span in dt_spans:
                 dt_id = dt_span.get_attribute("id")
-                traverse_folder(dt_id, new_path)
+                traverse_folder(dt_id, model, new_path)
         else:  # 하위 폴더 없으면 dd(문서) 확인
             sub_dd_list = driver.find_elements(By.XPATH, f'//*[@id="{sub_container_id}"]/dd')
             for dd in sub_dd_list:
@@ -58,6 +61,7 @@ def traverse_folder(folder_id, current_path=None):
                     soup = BeautifulSoup(content, "html.parser")
                     text_content = soup.find("div", {"id": "contentData"}).get_text(separator="\n", strip=True)
                     paragraphs = clean_text(text_content)
+                    refined_text = refine_text(model, "\n".join(paragraphs))
 
                     # 파일명 생성
                     file_name = "_".join(new_path + [title]) + ".txt"
@@ -70,7 +74,7 @@ def traverse_folder(folder_id, current_path=None):
                     file_path = os.path.join(save_dir, file_name)
                     file_path = file_path.replace(" ", "")
                     with open(file_path, "w", encoding="utf-8") as f:
-                        f.write("\n".join(paragraphs))
+                        f.write(json.dumps(refined_text, ensure_ascii=False, indent=2))
                     print("크롤링 및 저장 완료:", file_path)
 
     except Exception as e:
@@ -79,6 +83,20 @@ def traverse_folder(folder_id, current_path=None):
 load_dotenv()
 ID = os.getenv("ID")
 PW = os.getenv("PW")
+HF_TOKEN = os.getenv('HF_TOKEN')
+
+endpoint = HuggingFaceEndpoint(
+    repo_id='openai/gpt-oss-20b',
+    task='text-generation',
+    max_new_tokens=1024,
+    huggingfacehub_api_token=HF_TOKEN
+)
+
+model = ChatHuggingFace(
+    llm=endpoint,
+    verbose=True
+)
+
 
 # 1. Selenium으로 로그인
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
@@ -122,5 +140,5 @@ top_dt_list = driver.find_elements(By.XPATH, '//*[@id="SUB_1"]/dt') # 일반사�
 for dt in top_dt_list:
     dt_span = dt.find_element(By.TAG_NAME, "span")
     dt_id = dt_span.get_attribute("id")
-    traverse_folder(dt_id)
+    traverse_folder(dt_id, model)
 

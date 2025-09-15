@@ -15,12 +15,10 @@ with open(keyword_path, "r", encoding='utf-8') as f:
 common_keyword = [line.strip().split('. ', 1)[-1] for line in lines if line.strip()]
 # print(common_keyword)
 
-
 # 블로그 링크만 따로 크롤링해서 가져오기
 load_dotenv()
 client_id = os.getenv("CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
-
 
 # 딕셔너리 생성
 results = {}
