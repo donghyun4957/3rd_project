@@ -3,16 +3,31 @@ import requests
 from bs4 import BeautifulSoup
 
 def get_parser(url):
-    response = requests.get(url)
-    if response.status_code == 200:
-        bs = BeautifulSoup(response.text, "html.parser")
-    else: 
-        print("HTTP 요청 실패;", response.status_code)
-    return bs
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # 200 아니면 HTTPError 발생
+        return BeautifulSoup(response.text, "html.parser")
+
+    except requests.exceptions.HTTPError as e:
+        print(f"[HTTP 오류] 상태코드: {e.response.status_code}, 사유: {e.response.reason}")
+
+    except requests.exceptions.ConnectionError as e:
+        print("[네트워크 오류] 서버에 연결할 수 없음:", e)
+
+    except requests.exceptions.Timeout:
+        print("[타임아웃 오류] 서버 응답 지연")
+
+    except requests.exceptions.RequestException as e:
+        print("[알 수 없는 오류]", e)
+
+    return None
 
 def get_kin_content(url):
     # soup = BeautifulSoup(response.content, 'html.parser')
     bs = get_parser(url)
+
+    if bs == None:
+        return "제목 없음", "질문 없음", "답변 없음"
 
     qna_title = bs.find("div", class_="endTitleSection")
     qna_title_text = qna_title.get_text(strip=True) if qna_title else "제목 없음"
@@ -54,7 +69,11 @@ def get_naver_content(url):
 def get_mobile_naver_content(url):
 
     url = url.replace("blog.naver.com", "m.blog.naver.com")
+
     bs = get_parser(url)
+
+    if bs == None:
+        return "제목 없음", "내용 없음"
 
     title_tag = (
         bs.find("h3", class_="se_textarea") or

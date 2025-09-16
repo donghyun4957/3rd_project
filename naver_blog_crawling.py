@@ -21,7 +21,7 @@ client_secret = os.getenv("CLIENT_SECRET")
 results = {}
 
 # 위에서 가져온 키워드 리스트 for문 돌려서 크롤링(일단 100개)
-for kw in common_keyword[:2]:
+for kw in common_keyword[:3]:
     contents = []
     seen_links = set()
 
@@ -47,7 +47,7 @@ for kw in common_keyword[:2]:
                     continue
                 blog_title, blog_content = get_mobile_naver_content(link)
                 if blog_content != "내용 없음":
-                        content = {'제목': blog_title, '내용': blog_content, '블로그': item['bloggerlink'], '링크': link}
+                        content = {'title': blog_title, 'content': blog_content, 'type': '블로그', '출처': link, '차종': 'None', '엔진': 'None'}
                         contents.append(content)
                         seen_links.add(link)
 
