@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 from crawling import get_kin_content
 import json
 
-
 # 키워드 json 파일로 가져오기 → 리스트로 뽑기
 keyword_path = './keywords.txt'
 
@@ -24,7 +23,7 @@ client_secret = os.getenv("CLIENT_SECRET")
 results = {}
 
 # 위에서 가져온 키워드 리스트 for문 돌려서 크롤링(일단 100개)
-for kw in common_keyword[:1]:
+for kw in common_keyword[:2]:
     contents = []
     seen_links = set()
 
@@ -34,6 +33,10 @@ for kw in common_keyword[:1]:
         request = urllib.request.Request(url)
         request.add_header("X-Naver-Client-Id",client_id)
         request.add_header("X-Naver-Client-Secret",client_secret)
+        # request.add_header("User-Agent", "Mozilla/5.0")
+        request.add_header("User-Agent", 'Mozilla/5.0 (Windows NT 10.0;Win64; x64)\
+                            AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98\
+                            Safari/537.36')
         response = urllib.request.urlopen(request)
         rescode = response.getcode()
 
@@ -71,7 +74,7 @@ for kw in common_keyword[:1]:
 
 
 # json 파일로 저장하기
-with open("naver_kin_result1.json", "w", encoding="utf-8") as f:
+with open("naver_kin_result2.json", "w", encoding="utf-8") as f:
     json.dump(results, f, ensure_ascii=False, indent=4)
 
 print("JSON 파일로 저장 완료")

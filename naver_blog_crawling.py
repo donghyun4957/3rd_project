@@ -6,16 +6,13 @@ from crawling import get_mobile_naver_content
 import json
 
 # 키워드 json 파일로 가져오기 → 리스트로 뽑기
-keyword_path = './common_keyword.txt'
+keyword_path = './keywords.txt'
 
 with open(keyword_path, "r", encoding='utf-8') as f:
-    common_keyword = json.load(f)
+    lines = f.readlines()
 
-print(common_keyword)
+common_keyword = [line.strip().split('. ', 1)[-1] for line in lines if line.strip()]
 
-keywords = ['시동불량', '배터리방전']
-
-# 블로그 링크만 따로 크롤링해서 가져오기
 load_dotenv()
 client_id = os.getenv("CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
@@ -24,7 +21,7 @@ client_secret = os.getenv("CLIENT_SECRET")
 results = {}
 
 # 위에서 가져온 키워드 리스트 for문 돌려서 크롤링(일단 100개)
-for kw in keywords:
+for kw in common_keyword[:2]:
     contents = []
     seen_links = set()
 
@@ -34,6 +31,9 @@ for kw in keywords:
         request = urllib.request.Request(url)
         request.add_header("X-Naver-Client-Id",client_id)
         request.add_header("X-Naver-Client-Secret",client_secret)
+        request.add_header("User-Agent", 'Mozilla/5.0 (Windows NT 10.0;Win64; x64)\
+                            AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98\
+                            Safari/537.36')
         response = urllib.request.urlopen(request)
         rescode = response.getcode()
 
