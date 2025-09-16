@@ -36,6 +36,9 @@ def parse_table_target(page):
     tables = page.extract_tables() or []
 
     for table in tables:
+        last_ph = None
+        last_cause = None
+
         if not table or len(table[0]) < 2:
             # print('ccc')
             continue
@@ -50,8 +53,6 @@ def parse_table_target(page):
             splitted = component.split(" ")
             header_split.extend(splitted)
 
-            if "고장" in splitted:
-                found_indices["고장"] = idx
             if "현상" in splitted:
                 found_indices["현상"] = idx
             if "코드" in splitted:
@@ -59,29 +60,39 @@ def parse_table_target(page):
             if "원인" in splitted:
                 found_indices["원인"] = idx
 
-        if (("현상" in found_indices or "코드" in found_indices  or "고장" in found_indices) 
-                and "원인" in found_indices):
-
+        if (("현상" in found_indices or "코드" in found_indices) and "원인" in found_indices):
+           # 한 현상이 여러 원인을 가지는 경우 - 합치기
             for row in table[1:]:
                 # print('row : ', row)
                 if not row or len(row) < 2:   # 해당없음
                     # print('aaa')
                     continue
-                idx_ph = found_indices.get("현상", found_indices.get("코드", found_indices.get("고장")))
+                idx_ph = found_indices.get("현상", found_indices.get("코드"))
                 idx_cause = found_indices["원인"]
 
-                ph = norm(row[idx_ph]) if idx_ph is not None and idx_ph < len(row) else None
-                cause = norm(row[idx_cause]) if idx_cause < len(row) else None
+            # 한 원인이 여러 결과를 가지는 경우도 합치기
+                # ph = norm(row[idx_ph]) if idx_ph is not None and idx_ph < len(row) else None
+                # cause = norm(row[idx_cause]) if idx_cause < len(row) else None
 
-                if ph is None or cause is None:
-                    continue
+                ph_cell = row[idx_ph] if idx_ph is not None and idx_ph < len(row) else ""
+                ph = norm(ph_cell).strip() if ph_cell else None
+                if ph:
+                    last_ph = ph
+                else:
+                    ph = last_ph  # 빈 값이면 이전 현상 사용
 
-                # print('결과', ph)
-                # print('원인', cause)
+                # 원인 가져오기
+                cause_cell = row[idx_cause] if idx_cause is not None and idx_cause < len(row) else ""
+                cause = norm(cause_cell).strip() if cause_cell else None
+                if cause:
+                    last_cause = cause
+                else:
+                    cause = last_cause  # 빈 값이면 이전 원인 사용
 
-                result.setdefault(ph, [])
-                if cause not in result[ph]:
-                    result[ph].append(cause)
+                if ph and cause:
+                    result.setdefault(ph, [])
+                    if cause not in result[ph]:
+                        result[ph].append(cause)
     return result
 
 def transform_categories(parts):
@@ -169,6 +180,10 @@ def parse_pdfs(folder_path, output_json):
     print("저장 완료:", output_json)
 
 if __name__ == "__main__":
+
+    # 고려할 대상 - 결과와 원인이 1:1 매칭이 아닌 경우
+    # 테이블 바깥에 결과가 있는 경우
+
     folder_path = "./kia_data/EV9(MV)_160KW(2WD),160KW+160KW(4WD)"
     output_file = "1.json"                    # 항상 같은 이름
     parse_pdfs(folder_path, output_file)
