@@ -49,11 +49,14 @@ def parse_table_target(page):
         header_split = []
         found_indices = {}
 
-        for idx, component in enumerate(header) :
-            splitted = component.split(" ")
-            header_split.extend(splitted)
+        for idx, component in enumerate(header) : # 헤더에는 ['고장 코드', '원인', '바나나 먹을래']
+            splitted = component.split(" ") # for 문 돌아가면 '고장 코드' 차례에 idx는 0번째 요소를 뜻하는 0, component에는 splitted = ['고장', '코드']
+            header_split.extend(splitted) # header_split이라는 빈 리스트에 집어넣으니 다시 ['고장', '코드']
 
-            if "현상" in splitted:
+            # 현재 splitted 리스트 안에 아래의 단어 중 하나라도 발견도면 그 단어가 header의 component들 중 몇 번째 component에 속하는지를 파악해서
+            # 아래의 row 내용 중 그 번째에 해당하는 내용만을 추출하기 위함
+            # 그렇게 각자 현상, 코드 원인 마다 몇번째 인덱스에 속하는지를 알아내어 아래의 row에 그 번째의 대응되는 내용만을 추출
+            if "현상" in splitted: 
                 found_indices["현상"] = idx
             if "코드" in splitted:
                 found_indices["코드"] = idx

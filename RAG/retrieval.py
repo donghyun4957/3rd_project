@@ -1,10 +1,11 @@
 import os
 from dotenv import load_dotenv
-from langchain.vectorstores import FAISS
+from langchain_chroma.vectorstores import Chroma
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.prompts.chat import SystemMessagePromptTemplate, HumanMessagePromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.chains import RetrievalQA
 
 def make_chain(model):
@@ -28,7 +29,10 @@ def make_chain(model):
 if __name__ == "__main__":
 
     load_dotenv()
+    db_path = './chroma_db'
     HF_TOKEN = os.getenv('HF_TOKEN')
+
+    embedding_model = HuggingFaceEmbeddings(model_name="Alibaba-NLP/gte-Qwen2-1.5B-instruct")
 
     endpoint = HuggingFaceEndpoint(
         repo_id='openai/gpt-oss-20b',
@@ -38,7 +42,7 @@ if __name__ == "__main__":
     )
 
     model = ChatHuggingFace(llm=endpoint, verbose=True)
-    vector_store = FAISS.load_local('./db/faiss', text_embeddings, allow_dangerous_deserialization=True)
+    vector_store = Chroma(persist_directory=db_path, embedding_function=embedding_model, collection_name="car_db")
     retriever = vector_store.as_retriever()
     retrieval_qa = RetrievalQA.from_chain_type(llm=model, retriever=retriever, chain_type='stuff')
 
