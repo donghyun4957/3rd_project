@@ -6,7 +6,7 @@ from crawling import get_kin_content
 import json
 
 # 키워드 json 파일로 가져오기 → 리스트로 뽑기
-keyword_path = './keywords.txt'
+keyword_path = './data/keywords.txt'
 
 with open(keyword_path, "r", encoding='utf-8') as f:
     lines = f.readlines()
@@ -74,7 +74,7 @@ for kw in common_keyword[:5]:
 
 
 # json 파일로 저장하기
-with open("naver_kin_result2.json", "w", encoding="utf-8") as f:
+with open("results/naver_kin_results.json", "w", encoding="utf-8") as f:
     json.dump(results, f, ensure_ascii=False, indent=4)
 
 print("JSON 파일로 저장 완료")
