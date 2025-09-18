@@ -1,12 +1,17 @@
+import torch
 import json
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
-from langchain.vectorstores import FAISS
+from langchain_community.vectorstores.faiss import FAISS
 
+print("PyTorch GPU 사용 가능:", torch.cuda.is_available())
+print("GPU 개수:", torch.cuda.device_count())
+print("현재 GPU 인덱스:", torch.cuda.current_device())
+print("GPU 이름:", torch.cuda.get_device_name(torch.cuda.current_device()))
 
 file_path = './naver_blog_results_tmp.json'
-db_path = './chroma_db'
+db_path = './faiss_db'
 documents = []
 
 splitter = RecursiveCharacterTextSplitter(
@@ -14,12 +19,13 @@ splitter = RecursiveCharacterTextSplitter(
     chunk_overlap=50
 )
 
-embedding_model = HuggingFaceEmbeddings(model_name="Alibaba-NLP/gte-Qwen2-1.5B-instruct")
+embedding_model = HuggingFaceEmbeddings(model_name="Alibaba-NLP/gte-Qwen2-1.5B-instruct", model_kwargs={'device':'cuda'}, encode_kwargs={'normalize_embeddings':True})
 
 with open(file_path, 'r', encoding='utf-8') as f:
     blog = json.load(f)
-cnt = 0
+
 for keys, vals in blog.items():
+
     for val in vals:
         splits = splitter.split_text(val['content']) # 리스트 안에 쪼개진 문자열들
         
