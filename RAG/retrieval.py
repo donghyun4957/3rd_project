@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from langchain_chroma.vectorstores import Chroma
+from langchain.vectorstores import FAISS
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.prompts.chat import SystemMessagePromptTemplate, HumanMessagePromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
@@ -42,8 +42,17 @@ if __name__ == "__main__":
     )
 
     model = ChatHuggingFace(llm=endpoint, verbose=True)
-    vector_store = Chroma(persist_directory=db_path, embedding_function=embedding_model, collection_name="car_db")
-    retriever = vector_store.as_retriever()
-    retrieval_qa = RetrievalQA.from_chain_type(llm=model, retriever=retriever, chain_type='stuff')
+    chain = make_chain(model)
 
-    retrieval_qa.invoke('인디언 조가 누구를 죽였나요?')
+    vector_store = FAISS.load_local(db_path, embedding_model, collection_name="car_db", allow_dangerous_deserialization=True)
+    retriever = vector_store.as_retriever(search_type='similarity', search_kwargs={'kj':3})
+
+    query = "왕비가 백설공주에게 먹인 것은 무엇인가요?"
+
+    # chain of thought
+    # 메타 데이터용 정보 추출
+    # 메타 데이터 필터링
+    retrievals = retriever.batch([query])
+    context_text = '\n'.join([doc.page_content for doc in retrievals[0]])
+
+    response = chain.invoke({'query': query, 'context': context_text})

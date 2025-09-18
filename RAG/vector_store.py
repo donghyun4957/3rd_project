@@ -2,7 +2,7 @@ import json
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
-from langchain_chroma.vectorstores import Chroma
+from langchain.vectorstores import FAISS
 
 
 file_path = './naver_blog_results_tmp.json'
@@ -21,7 +21,6 @@ with open(file_path, 'r', encoding='utf-8') as f:
 cnt = 0
 for keys, vals in blog.items():
     for val in vals:
-        print(val['title'])
         splits = splitter.split_text(val['content']) # 리스트 안에 쪼개진 문자열들
         
         for split in splits:
@@ -37,5 +36,5 @@ for keys, vals in blog.items():
             )
             documents.append(document)
 
-vector_store = Chroma.from_documents(documents, embedding_model, persist_directory=db_path)
-vector_store.persist()
+vector_store = FAISS.from_documents(documents, embedding_model)
+vector_store.save_local(db_path)
