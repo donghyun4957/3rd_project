@@ -7,7 +7,7 @@
 # 🔖 Conents
 1. [팀 소개](#팀-소개)
 2. [프로젝트 개요](#프로젝트-개요)
-3. 기술 스택 & 사용한 모델
+3. [기술 스택 & 사용한 모델](#기술-스택과-모델)
 4. [시스템 아키텍쳐](#시스템-아키텍처)
 5. WBS
 6. 요구사항 명세서
@@ -32,6 +32,16 @@
 <br>
 <br>
 
+# 기술 스택과 모델
+## 🔧기술 스택
+
+<br>
+
+# 🤖 사용한 모델
+
+<br>
+<br>
+
 # 프로젝트 개요
 ## 프로젝트 명
 ### 🚗🔧 자동차 고장 및 이상현상 정비 챗봇  
@@ -43,11 +53,9 @@
 
 <br>
 
-## 프로젝트 필요성
+## ✅ 프로젝트 필요성
 
-| ![이미지1](<img width="1303" height="881" alt="image" src="https://github.com/user-attachments/assets/d5401106-57f9-4ae7-be02-9b71f23363a4" />
-) | ![이미지2](<img width="1309" height="1191" alt="image" src="https://github.com/user-attachments/assets/2bd5e301-ba27-48b5-b81c-98c6268eb969" />
-) |
+| <img width="1304" height="874" alt="image" src="https://github.com/user-attachments/assets/151b78f2-3148-40f4-b826-b3c010cf9782" /> | <img width="1280" height="1180" alt="image" src="https://github.com/user-attachments/assets/2e8aa593-3542-41b9-a29a-0c85bc2f7820" /> |
 |---------------------------|---------------------------|
 |[소비자민원평가-자동차; AS에 민원 집중](https://www.consumernews.co.kr/news/articleView.html?idxno=739584) | [반복되는 엔진경고등에도 원인 못찾고 방치... 뒤늦게 고장 판정되면 시간ㆍ비용은 소비자 몫](https://www.consumernews.co.kr/news/articleView.html?idxno=739584) |
 
@@ -72,7 +80,7 @@
 
 <br>
 
-## 프로젝트 목표
+## 🎯 프로젝트 목표
 
 
 <br>
@@ -236,3 +244,4 @@ sequenceDiagram
 데이터적 측면: **기업 매뉴얼 + 사용자 경험 데이터 융합**
 
 기술적 확장성: **추후 다른 브랜드 차량 GSW·포럼 데이터로 확장 가능**
+
