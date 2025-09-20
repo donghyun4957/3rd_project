@@ -1,13 +1,13 @@
 import os
 from dotenv import load_dotenv
 from langchain.vectorstores import FAISS
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.prompts.chat import SystemMessagePromptTemplate, HumanMessagePromptTemplate
-from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
-from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
-from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_core.chat_history import BaseChatMessageHistory
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
+from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
+from langchain_core.prompts.chat import SystemMessagePromptTemplate, HumanMessagePromptTemplate
 
 
 store = {}
@@ -27,6 +27,12 @@ class InMemoryHistory(BaseChatMessageHistory):
         return str(self.messages)
 
 
+def get_by_session_id(session_id):
+    if session_id not in store:
+        store[session_id] = InMemoryHistory()
+    return store[session_id]
+
+
 def make_chain(model):
 
     instruction = """
@@ -44,47 +50,35 @@ def make_chain(model):
     prompt = ChatPromptTemplate.from_messages([
         SystemMessagePromptTemplate.from_template(instruction),
         MessagesPlaceholder(variable_name='history'),
-        HumanMessagePromptTemplate.from_template("아래의 원문과 지시사항을 참고하여 답변을 생성해주세요.\n\n원문:\n{content}")
+        HumanMessagePromptTemplate.from_template(
+            "사용자 질문: {query}\n\n"
+            "참고 문서:\n{content}\n\n"
+            "위 질문과 문서를 바탕으로 답변을 작성해주세요."
+        )
     ])
     
-    chain = prompt | model
+    chain = prompt | model | StrOutputParser()
 
     chain_with_history = RunnableWithMessageHistory(
         chain,
         get_session_history=get_by_session_id,
-        input_messages_key='content',
-        history_messages_key='history'  # MessagesPlaceholder의 variable_name과 맞춰줘야 함
+        input_messages_key='query',
+        history_messages_key='history'
     )
 
     return chain_with_history
 
+def make_filter(filter: dict):
 
-def get_by_session_id(session_id):
-    if session_id not in store:
-        store[session_id] = InMemoryHistory()
-    return store[session_id]
+    if any(list(filter.values())):
+        main_filter = filter.copy()
+    else:
+        main_filter = None
 
+    sub_filter = {k: None for k in filter.keys()}
 
-def extract_car_info(model, query):
-    """질문에서 차종/엔진 정보를 추출하는 간단한 CoT 체인"""
-    extract_prompt = f"""
-    질문: {query}
+    return main_filter, sub_filter
 
-    1. 질문에서 차종과 엔진 정보를 확인하세요.
-    2. 차종과 엔진 정보가 불분명하면, 사용자에게 추가 정보를 요청하세요.
-    3. 계속되는 추가정보 요청에도 불분명한 답변을 얻었다면 차종과 엔진 정보를 'Unknown'으로 표시하세요.
-    4.
-    
-    출력:
-    {{
-        "차종": "...",
-        "엔진": "..."
-    }}
-    """
-    result = chain.invoke({'query': extract_prompt}, config={'configurable': {'session_id': 'user'}})
-    car_type = result.get("차종", "Unknown")
-    engine = result.get("엔진", "Unknown")
-    return car_type, engine
 
 if __name__ == "__main__":
 
@@ -92,14 +86,13 @@ if __name__ == "__main__":
     db_path = './faiss_db'
     HF_TOKEN = os.getenv('HF_TOKEN')
 
-    embedding_model = HuggingFaceEmbeddings(model_name="Alibaba-NLP/gte-Qwen2-1.5B-instruct")
+    embedding_model = HuggingFaceEmbeddings(model_name="dragonkue/snowflake-arctic-embed-l-v2.0-ko")
 
     endpoint = HuggingFaceEndpoint(
         repo_id='openai/gpt-oss-20b',
         task='text-generation',
         max_new_tokens=1024,
         huggingfacehub_api_token=HF_TOKEN,
-        model_kwargs={"device": "cuda"}
     )
 
     model = ChatHuggingFace(llm=endpoint, verbose=True)
@@ -108,27 +101,18 @@ if __name__ == "__main__":
     vector_store = FAISS.load_local(db_path, embedding_model, allow_dangerous_deserialization=True)
 
     query = "자동차가 브레이크가 밀리는데 원인이 뭐야?"
+    filter = {"차종": None, "엔진": None}
 
-    # car_type, engine = extract_car_info(chain, query)
+    main_filter, sub_filter = make_filter(filter)
 
-    if car_type != "Unknown" and engine != "Unknown":
-        k_docs_car = vector_store.similarity_search(
-            query,
-            k=3,
-            filter={"차종": car_type, "엔진": engine}
-        )
+    if main_filter:
+        main_docs = vector_store.similarity_search(query, k=3, filter=main_filter)
     else:
-        k_docs_car = []
+        main_docs = []
 
-    k_docs_general = vector_store.similarity_search(
-        query,
-        k=3,
-        filter={"차종": None, "엔진": None}
-    )
+    sub_docs = vector_store.similarity_search(query, k=3, filter=sub_filter)
 
-    context_text = '\n'.join([doc.page_content for doc in k_docs_general])
-    # context_text = '\n'.join([doc.page_content for doc in k_docs_car + k_docs_general])
-
-    response = chain.invoke({'content': context_text}, config={'configurable': {'session_id': 'user'}})
-
+    context_text = '\n'.join([doc.page_content for doc in main_docs + sub_docs])
+    response = chain.invoke({'query': query, 'content': context_text}, config={'configurable': {'session_id': 'user'}})
+    
     print(response)
