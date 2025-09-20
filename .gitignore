@@ -1,3 +1,5 @@
 .env
 crawl_result
 chroma_db
+database
+faiss_db
